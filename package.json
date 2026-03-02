@@ -1,0 +1,19 @@
+{
+  "name": "typed-fsm",
+  "version": "0.1.0",
+  "description": "A strongly typed finite state machine for TypeScript.",
+  "author": "ALEX ROSANO",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "typescript": "^5.9.3"
+  }
+}
