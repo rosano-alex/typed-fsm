@@ -37,16 +37,34 @@ export type State<
 > = {
   /**
    * Message handler for this state.
-   *
-   * Parameters:
-   *  message
-   *      incoming request with payload and reply channel
-   *
-   *  instance
-   *      the running machine instance which allows transitions
    */
   onMessage: (
     message: Message<TPayload, TReply>,
     instance: { setState: (newState: States) => void; currentState: States }
   ) => void;
+};
+
+/**
+ * Descriptor defines the structure of the machine.
+ *
+ * This is a purely declarative configuration.
+ * No runtime behavior exists here.
+ */
+export type Descriptor<
+  States extends string,
+  TPayload = unknown,
+  TReply = unknown,
+> = {
+  /**
+   * Initial state when the machine is created.
+   */
+  initialState: States;
+
+  /**
+   * Mapping of all states in the machine.
+   *
+   * Record enforces that every state in the union
+   * has a corresponding implementation.
+   */
+  states: Record<States, State<States, TPayload, TReply>>;
 };
