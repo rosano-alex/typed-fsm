@@ -40,7 +40,7 @@ export type State<
    */
   onMessage: (
     message: Message<TPayload, TReply>,
-    instance: { setState: (newState: States) => void; currentState: States }
+    instance: Instance<States, TPayload, TReply>
   ) => void;
 };
 
@@ -67,4 +67,36 @@ export type Descriptor<
    * has a corresponding implementation.
    */
   states: Record<States, State<States, TPayload, TReply>>;
+};
+
+/**
+ * Instance represents the runtime machine.
+ *
+ * This is what callers interact with.
+ */
+export type Instance<
+  States extends string,
+  TPayload = unknown,
+  TReply = unknown,
+> = {
+  /**
+   * The machine's currently active state.
+   */
+  currentState: States;
+
+  /**
+   * Transition the machine to a new state.
+   *
+   * Compile-time safety ensures only valid
+   * states can be transitioned to.
+   */
+  setState: (newState: States) => void;
+
+  /**
+   * Send a message to the machine.
+   *
+   * The machine will dispatch the message
+   * to the handler of the current state.
+   */
+  send: (message: Message<TPayload, TReply>) => void;
 };
