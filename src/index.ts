@@ -1,1 +1,1 @@
-// typed-fsm entry point
+export * from './fsm';
