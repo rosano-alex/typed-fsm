@@ -100,3 +100,36 @@ export type Instance<
    */
   send: (message: Message<TPayload, TReply>) => void;
 };
+
+/**
+ * Factory function that creates a state machine instance.
+ *
+ * The generic parameters are inferred automatically
+ * from the descriptor passed in.
+ */
+export function createFSM<
+  States extends string,
+  TPayload = unknown,
+  TReply = unknown,
+>(
+  descriptor: Descriptor<States, TPayload, TReply>
+): Instance<States, TPayload, TReply> {
+  let state = descriptor.initialState;
+
+  const instance: Instance<States, TPayload, TReply> = {
+    get currentState() {
+      return state;
+    },
+
+    setState(newState) {
+      state = newState;
+    },
+
+    send(message) {
+      const handler = descriptor.states[state];
+      return handler.onMessage(message, instance);
+    },
+  };
+
+  return instance;
+}
