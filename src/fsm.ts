@@ -48,6 +48,13 @@ export type State<
 > = {
   /**
    * Message handler for this state.
+   *
+   * Parameters:
+   *  message
+   *      incoming request with payload and reply channel
+   *
+   *  instance
+   *      the running machine instance which allows transitions
    */
   onMessage: (
     message: Message<TPayload, TReply>,
@@ -120,6 +127,12 @@ export type Instance<
  *
  * The generic parameters are inferred automatically
  * from the descriptor passed in.
+ *
+ * Example inference:
+ *
+ *   states = { idle, running }
+ *
+ *   => States = "idle" | "running"
  */
 export function createFSM<
   States extends string,
