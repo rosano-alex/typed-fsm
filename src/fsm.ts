@@ -1,4 +1,15 @@
 /**
+ * Prevents TypeScript from re-inferring a generic type.
+ *
+ * Without this, `initialState` could cause the compiler
+ * to widen the state union incorrectly.
+ *
+ * This trick forces the compiler to respect the
+ * existing inferred union instead of recomputing it.
+ */
+type NoInfer<T> = [T][T extends any ? 0 : never];
+
+/**
  * Message represents a request sent to the state machine.
  *
  * TPayload
@@ -57,8 +68,11 @@ export type Descriptor<
 > = {
   /**
    * Initial state when the machine is created.
+   *
+   * NoInfer prevents this property from influencing
+   * the inferred state union.
    */
-  initialState: States;
+  initialState: NoInfer<States>;
 
   /**
    * Mapping of all states in the machine.
