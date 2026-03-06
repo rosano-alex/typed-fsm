@@ -1,4 +1,15 @@
 /**
+ * Prevents TypeScript from re-inferring a generic type.
+ *
+ * Without this, `initialState` could cause the compiler
+ * to widen the state union incorrectly.
+ *
+ * This trick forces the compiler to respect the
+ * existing inferred union instead of recomputing it.
+ */
+type NoInfer<T> = [T][T extends any ? 0 : never];
+
+/**
  * Message represents a request sent to the state machine.
  *
  * TPayload
@@ -37,6 +48,13 @@ export type State<
 > = {
   /**
    * Message handler for this state.
+   *
+   * Parameters:
+   *  message
+   *      incoming request with payload and reply channel
+   *
+   *  instance
+   *      the running machine instance which allows transitions
    */
   onMessage: (
     message: Message<TPayload, TReply>,
@@ -57,8 +75,11 @@ export type Descriptor<
 > = {
   /**
    * Initial state when the machine is created.
+   *
+   * NoInfer prevents this property from influencing
+   * the inferred state union.
    */
-  initialState: States;
+  initialState: NoInfer<States>;
 
   /**
    * Mapping of all states in the machine.
@@ -100,3 +121,42 @@ export type Instance<
    */
   send: (message: Message<TPayload, TReply>) => void;
 };
+
+/**
+ * Factory function that creates a state machine instance.
+ *
+ * The generic parameters are inferred automatically
+ * from the descriptor passed in.
+ *
+ * Example inference:
+ *
+ *   states = { idle, running }
+ *
+ *   => States = "idle" | "running"
+ */
+export function createFSM<
+  States extends string,
+  TPayload = unknown,
+  TReply = unknown,
+>(
+  descriptor: Descriptor<States, TPayload, TReply>
+): Instance<States, TPayload, TReply> {
+  let state = descriptor.initialState;
+
+  const instance: Instance<States, TPayload, TReply> = {
+    get currentState() {
+      return state;
+    },
+
+    setState(newState) {
+      state = newState;
+    },
+
+    send(message) {
+      const handler = descriptor.states[state];
+      return handler.onMessage(message, instance);
+    },
+  };
+
+  return instance;
+}
