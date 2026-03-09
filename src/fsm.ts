@@ -114,6 +114,11 @@ export type Instance<
   setState: (newState: States) => void;
 
   /**
+   * Reset the machine back to the initial state.
+   */
+  reset: () => void;
+
+  /**
    * Send a message to the machine.
    *
    * The machine will dispatch the message
@@ -150,6 +155,10 @@ export function createFSM<
 
     setState(newState) {
       state = newState;
+    },
+
+    reset() {
+      state = descriptor.initialState;
     },
 
     send(message) {
