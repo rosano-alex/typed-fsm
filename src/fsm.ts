@@ -88,6 +88,18 @@ export type Descriptor<
    * has a corresponding implementation.
    */
   states: Record<States, State<States, TPayload, TReply>>;
+
+  /**
+   * Optional lifecycle hook triggered after
+   * a successful state transition.
+   *
+   * Useful for:
+   *   logging
+   *   metrics
+   *   debugging
+   *   analytics
+   */
+  onChange?: (from: States, to: States) => void;
 };
 
 /**
@@ -154,11 +166,15 @@ export function createFSM<
     },
 
     setState(newState) {
+      const previous = state;
       state = newState;
+      descriptor.onChange?.(previous, newState);
     },
 
     reset() {
+      const previous = state;
       state = descriptor.initialState;
+      descriptor.onChange?.(previous, state);
     },
 
     send(message) {
