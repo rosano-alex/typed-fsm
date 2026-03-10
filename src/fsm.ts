@@ -8,7 +8,6 @@
  * existing inferred union instead of recomputing it.
  */
 type NoInfer<T> = [T][T extends any ? 0 : never];
-
 /**
  * Message represents a request sent to the state machine.
  *
@@ -55,11 +54,13 @@ export type State<
    *
    *  instance
    *      the running machine instance which allows transitions
+   *
+   * Return type allows async handlers.
    */
   onMessage: (
     message: Message<TPayload, TReply>,
     instance: Instance<States, TPayload, TReply>
-  ) => void;
+  ) => void | Promise<void>;
 };
 
 /**
@@ -116,7 +117,6 @@ export type Instance<
    * The machine's currently active state.
    */
   currentState: States;
-
   /**
    * Transition the machine to a new state.
    *
@@ -151,6 +151,7 @@ export type Instance<
  *
  *   => States = "idle" | "running"
  */
+
 export function createFSM<
   States extends string,
   TPayload = unknown,
