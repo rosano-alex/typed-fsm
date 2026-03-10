@@ -8,7 +8,6 @@
  * existing inferred union instead of recomputing it.
  */
 type NoInfer<T> = [T][T extends any ? 0 : never];
-
 /**
  * Message represents a request sent to the state machine.
  *
@@ -55,11 +54,13 @@ export type State<
    *
    *  instance
    *      the running machine instance which allows transitions
+   *
+   * Return type allows async handlers.
    */
   onMessage: (
     message: Message<TPayload, TReply>,
     instance: Instance<States, TPayload, TReply>
-  ) => void;
+  ) => void | Promise<void>;
 };
 
 /**
@@ -88,6 +89,18 @@ export type Descriptor<
    * has a corresponding implementation.
    */
   states: Record<States, State<States, TPayload, TReply>>;
+
+  /**
+   * Optional lifecycle hook triggered after
+   * a successful state transition.
+   *
+   * Useful for:
+   *   logging
+   *   metrics
+   *   debugging
+   *   analytics
+   */
+  onChange?: (from: States, to: States) => void;
 };
 
 /**
@@ -104,7 +117,6 @@ export type Instance<
    * The machine's currently active state.
    */
   currentState: States;
-
   /**
    * Transition the machine to a new state.
    *
@@ -112,6 +124,11 @@ export type Instance<
    * states can be transitioned to.
    */
   setState: (newState: States) => void;
+
+  /**
+   * Reset the machine back to the initial state.
+   */
+  reset: () => void;
 
   /**
    * Send a message to the machine.
@@ -134,6 +151,7 @@ export type Instance<
  *
  *   => States = "idle" | "running"
  */
+
 export function createFSM<
   States extends string,
   TPayload = unknown,
@@ -149,7 +167,15 @@ export function createFSM<
     },
 
     setState(newState) {
+      const previous = state;
       state = newState;
+      descriptor.onChange?.(previous, newState);
+    },
+
+    reset() {
+      const previous = state;
+      state = descriptor.initialState;
+      descriptor.onChange?.(previous, state);
     },
 
     send(message) {
