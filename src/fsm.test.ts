@@ -56,4 +56,41 @@ describe('createFSM', () => {
 
     expect(machine.currentState).toBe('running');
   });
+
+  test('send dispatches message to current state', () => {
+    const machine = createFSM(descriptor);
+
+    const reply = vi.fn();
+
+    const msg: Message<Payload, Reply> = {
+      payload: { action: 'start' },
+      reply,
+    };
+
+    machine.send(msg);
+
+    expect(machine.currentState).toBe('running');
+    expect(reply).toHaveBeenCalledWith('started');
+  });
+
+  test('state handlers change behavior after transition', () => {
+    const machine = createFSM(descriptor);
+
+    const reply = vi.fn();
+
+    machine.send({
+      payload: { action: 'start' },
+      reply,
+    });
+
+    expect(machine.currentState).toBe('running');
+
+    machine.send({
+      payload: { action: 'stop' },
+      reply,
+    });
+
+    expect(machine.currentState).toBe('stopped');
+    expect(reply).toHaveBeenCalledWith('stopped');
+  });
 });
