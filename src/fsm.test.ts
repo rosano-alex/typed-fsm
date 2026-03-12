@@ -93,4 +93,34 @@ describe('createFSM', () => {
     expect(machine.currentState).toBe('stopped');
     expect(reply).toHaveBeenCalledWith('stopped');
   });
+
+  test('reset returns machine to initial state', () => {
+    const machine = createFSM(descriptor);
+
+    const reply = vi.fn();
+
+    machine.send({
+      payload: { action: 'start' },
+      reply,
+    });
+
+    expect(machine.currentState).toBe('running');
+
+    machine.reset();
+
+    expect(machine.currentState).toBe('idle');
+  });
+
+  test('onChange lifecycle hook fires', () => {
+    const onChange = vi.fn();
+
+    const machine = createFSM({
+      ...descriptor,
+      onChange,
+    });
+
+    machine.setState('running');
+
+    expect(onChange).toHaveBeenCalledWith('idle', 'running');
+  });
 });
