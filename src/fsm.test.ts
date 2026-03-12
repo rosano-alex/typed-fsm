@@ -123,4 +123,42 @@ describe('createFSM', () => {
 
     expect(onChange).toHaveBeenCalledWith('idle', 'running');
   });
+
+  test('async handlers work correctly', async () => {
+    const asyncDescriptor: Descriptor<States, Payload, Reply> = {
+      initialState: 'idle',
+
+      states: {
+        idle: {
+          async onMessage(message, instance) {
+            if (message.payload.action === 'start') {
+              await Promise.resolve();
+              instance.setState('running');
+              message.reply('started');
+            }
+          },
+        },
+
+        running: {
+          onMessage: () => {},
+        },
+
+        stopped: {
+          onMessage: () => {},
+        },
+      },
+    };
+
+    const machine = createFSM(asyncDescriptor);
+
+    const reply = vi.fn();
+
+    await machine.send({
+      payload: { action: 'start' },
+      reply,
+    });
+
+    expect(machine.currentState).toBe('running');
+    expect(reply).toHaveBeenCalledWith('started');
+  });
 });
