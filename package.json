@@ -8,6 +8,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
     "build": "tsc"
   },
   "engines": {
@@ -15,5 +17,13 @@
   },
   "dependencies": {
     "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.0"
+  },
+  "jest": {
+    "testPathIgnorePatterns": [
+      "/dist/"
+    ]
   }
 }
