@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>FSM Coffee Machine Example</title>
+
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f4f6f8;
+        display: flex;
+        justify-content: center;
+        margin-top: 60px;
+        color: white;
+      }
+
+      .app {
+        width: 620px;
+        background: #654321;
+        padding: 24px;
+        border-radius: 15px;
+      }
+
+      h1 {
+        margin-top: 0;
+      }
+
+      .state {
+        font-size: 20px;
+        font-weight: bold;
+        margin-bottom: 20px;
+      }
+
+      .controls {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+
+      button {
+        padding: 10px 14px;
+        border: none;
+        border-radius: 6px;
+        background: #6e6a6d;
+        color: white;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background: #b6b4b6;
+      }
+
+      button:disabled {
+        background: #bbb;
+        cursor: not-allowed;
+      }
+
+      .log {
+        background: #333;
+        color: rgb(10, 215, 10);
+        padding: 10px;
+        height: 160px;
+        overflow-y: auto;
+        font-family: monospace;
+        border-radius: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <h1>Coffee Machine</h1>
+      <h3>FINITE STATE MACHINE</h3>
+      <div class="state">State: <span id="state">idle</span></div>
+      <div class="controls">
+        <button id="brew">Brew Coffee</button>
+        <button id="serve">Serve Coffee</button>
+        <button id="reset">Reset State</button>
+      </div>
+      <div class="log" id="log"></div>
+    </div>
+    <script>
+      /*
+=========================
+FSM IMPLEMENTATION
+=========================
+*/
+
+      function createFSM(descriptor) {
+        let state = descriptor.initialState;
+        const instance = {
+          get currentState() {
+            return state;
+          },
+          setState(newState) {
+            const previous = state;
+            state = newState;
+            descriptor.onChange?.(previous, newState);
+            updateUI();
+          },
+          reset() {
+            const previous = state;
+            state = descriptor.initialState;
+            descriptor.onChange?.(previous, state);
+            updateUI();
+          },
+          send(message) {
+            const handler = descriptor.states[state];
+            handler.onMessage(message, instance);
+          },
+        };
+        return instance;
+      }
+
+      /*
+=========================
+UI HELPERS
+=========================
+*/
+
+      const stateEl = document.getElementById('state');
+      const logEl = document.getElementById('log');
+
+      function log(text) {
+        const line = document.createElement('div');
+        line.textContent = text;
+        logEl.appendChild(line);
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+
+      function updateUI() {
+        stateEl.textContent = coffeeMachine.currentState;
+      }
+
+      /*
+=========================
+COFFEE MACHINE FSM
+=========================
+*/
+
+      const coffeeMachine = createFSM({
+        initialState: 'idle',
+
+        onChange(from, to) {
+          log(`STATE CHANGE: ${from} → ${to}`);
+        },
+
+        states: {
+          idle: {
+            onMessage(message, instance) {
+              if (message.payload.type === 'brew') {
+                log(`Brewing ${message.payload.drink}`);
+                instance.setState('brewing');
+                message.reply('Brewing started');
+              }
+            },
+          },
+          brewing: {
+            onMessage(message, instance) {
+              if (message.payload.type === 'serve') {
+                log('Coffee ready');
+                instance.setState('serving');
+                message.reply('Serving coffee');
+              }
+            },
+          },
+          serving: {
+            onMessage(message, instance) {
+              if (message.payload.type === 'reset') {
+                log('Machine reset');
+                instance.reset();
+                message.reply('Back to idle');
+              }
+            },
+          },
+        },
+      });
+      /*
+=========================
+MESSAGE SENDER
+=========================
+*/
+      function send(payload) {
+        coffeeMachine.send({
+          payload,
+          reply(response) {
+            log('REPLY: ' + response);
+          },
+        });
+      }
+
+      /*
+=========================
+BUTTONS
+=========================
+*/
+
+      document.getElementById('brew').onclick = () => {
+        send({ type: 'brew', drink: 'espresso' });
+      };
+
+      document.getElementById('serve').onclick = () => {
+        send({ type: 'serve' });
+      };
+
+      document.getElementById('reset').onclick = () => {
+        send({ type: 'reset' });
+      };
+      /*
+=========================
+INITIAL UI
+=========================
+*/
+      updateUI();
+      log('Machine ready');
+    </script>
+  </body>
+</html>
