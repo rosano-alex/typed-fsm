@@ -1,29 +1,45 @@
 {
   "name": "typed-fsm",
   "version": "0.1.0",
-  "description": "A strongly typed finite state machine for TypeScript.",
+  "description": "A strongly typed finite state machine for TypeScript with actor style messaging.",
+  "keywords": [
+    "typescript",
+    "fsm",
+    "state-machine",
+    "actor-model",
+    "typed",
+    "architecture"
+  ],
   "author": "ALEX ROSANO",
   "license": "MIT",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
-    "build": "tsc"
-  },
-  "engines": {
-    "node": ">=18"
-  },
-  "dependencies": {
-    "typescript": "^5.9.3"
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "prettier": "prettier --write .",
+    "demo:ts": "npx tsx examples/turnstile/app.ts"
   },
   "devDependencies": {
+    "tsx": "^4.21.0",
+    "prettier": "^3.8.1",
     "vitest": "^4.1.0"
   },
   "jest": {
     "testPathIgnorePatterns": [
       "/dist/"
     ]
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "typescript": "^5.9.3"
   }
 }
