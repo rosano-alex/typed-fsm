@@ -1,27 +1,16 @@
-![Finite State Machine](misc/label.png)
+![Finite State Machine](misc/typed.png)
 
-A minimal, type-safe finite state machine (FSM) library for TypeScript.  States are first-class values. Transitions are compile-time checked. The machine (FSM) communicates via a message-passing interface, keeping callers and handlers fully decoupled.
+A minimal, type-safe finite state machine (FSM) library for TypeScript. States are first-class values. Transitions are compile-time checked. The machine communicates via message-passing, keeping callers and handlers fully decoupled.
 
-<b>Example implementations can be found in the example folders.<b>
+**Example implementations can be found in the example folders.**
 
 ## Installation
 
-Copy `fsm.ts` into your project, or import from wherever you're hosting it:
+Copy `fsm.ts` into your project:
 
 ```ts
 import { createFSM } from './fsm';
 ```
-
-## Core Concepts
-
-| Concept      | Description                                                                            |
-| ------------ | -------------------------------------------------------------------------------------- |
-| `Message`    | A request sent to the machine, carrying a `payload` and a `reply` callback             |
-| `State`      | A handler that defines how the machine responds to messages in a given state           |
-| `Descriptor` | A declarative config — initial state, all state handlers, and optional lifecycle hooks |
-| `Instance`   | The live, running machine returned by `createFSM`                                      |
-
----
 
 ## Quick Start
 
@@ -77,155 +66,35 @@ machine.send({
 });
 ```
 
-
-
-## API Reference
+## API
 
 ### `createFSM(descriptor)`
 
-Creates and returns a running state machine instance.
+Creates and returns a running state machine. Takes a descriptor with:
 
-```ts
-const machine = createFSM<States, TPayload, TReply>(descriptor);
-```
+| Property       | Required | Description                                   |
+| -------------- | -------- | --------------------------------------------- |
+| `initialState` | yes      | The state the machine starts in               |
+| `states`       | yes      | A handler for every state in the union        |
+| `onChange`     | no       | Called after every successful state transition |
 
-Generic type parameters are inferred automatically from the descriptor — you rarely need to annotate them explicitly.
+Each state defines an `onMessage(message, instance)` handler (sync or async). The `message` carries a `payload` and a `reply` callback. The `instance` exposes:
 
----
-
-### `Descriptor`
-
-The configuration object passed to `createFSM`.
-
-```ts
-type Descriptor<States, TPayload, TReply> = {
-  initialState: States;
-  states: Record<States, State<States, TPayload, TReply>>;
-  onChange?: (from: States, to: States) => void;
-};
-```
-
-| Property       | Required | Description                                    |
-| -------------- | -------- | ---------------------------------------------- |
-| `initialState` | yes     | The state the machine starts in                |
-| `states`       | yes      | A handler for every state in the union         |
-| `onChange`     | no      | Called after every successful state transition |
-
----
-
-### `State`
-
-Defines how the machine behaves in a given state.
-
-```ts
-type State<States, TPayload, TReply> = {
-  onMessage: (
-    message: Message<TPayload, TReply>,
-    instance: Instance<States, TPayload, TReply>
-  ) => void | Promise<void>;
-};
-```
-
-Each state receives the incoming `message` and the `instance` of the machine, allowing it to reply and/or transition.
-
----
-
-### `Message`
-
-A request sent to the machine.
-
-```ts
-type Message<TPayload, TReply> = {
-  payload: TPayload;
-  reply: (response: TReply) => void;
-};
-```
-
-The `reply` callback lets the handler respond to the sender without any shared references. This enables clean request/response patterns without coupling caller and machine.
-
----
-
-### `Instance`
-
-The live machine returned by `createFSM`.
-
-```ts
-type Instance<States, TPayload, TReply> = {
-  currentState: States;
-  setState: (newState: States) => void;
-  reset: () => void;
-  send: (message: Message<TPayload, TReply>) => void;
-};
-```
-
-| Member            | Description                                       |
+| Method/Property   | Description                                       |
 | ----------------- | ------------------------------------------------- |
 | `currentState`    | The currently active state                        |
 | `setState(state)` | Transition to a new state (compile-time checked)  |
 | `reset()`         | Return to `initialState`                          |
 | `send(message)`   | Dispatch a message to the current state's handler |
 
----
-
 ## Type Safety
 
-The `States` generic is inferred from the keys of `states`. This means:
-
-- `setState` only accepts valid state names — typos are caught at compile time
-- `initialState` is validated against the same union
-- Exhaustiveness is enforced: every state in the union must have an entry in `states`
+The `States` generic is inferred from the keys of `states`, so `setState` only accepts valid state names, `initialState` is validated against the same union, and every state must have a handler — all enforced at compile time.
 
 ```ts
-//  Valid
-instance.setState('loading');
-
-//  Compile error: Argument of type '"fetching"' is not assignable...
-instance.setState('fetching');
+instance.setState('loading');   // valid
+instance.setState('fetching');  // compile error
 ```
-
----
-
-## Patterns
-
-### Request / Response
-
-The `reply` function on `Message` allows callers to receive a typed response without knowing anything about the machine's internals:
-
-```ts
-machine.send({
-  payload: { id: 42 },
-  reply(response) {
-    // response is fully typed as TReply
-    console.log(response);
-  },
-});
-```
-
-### Transition Logging
-
-Use `onChange` in the descriptor to trace state changes:
-
-```ts
-onChange(from, to) {
-  console.log(`[FSM] ${from} → ${to}`);
-}
-```
-
-### Async Handlers
-
-`onMessage` supports `async`/`await` natively:
-
-```ts
-idle: {
-  async onMessage(message, instance) {
-    const result = await someAsyncOperation(message.payload);
-    instance.setState("done");
-    message.reply(result);
-  },
-},
-```
-
----
 
 ## License
 
