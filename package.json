@@ -1,5 +1,5 @@
 {
-  "name": "typed-fsm",
+  "name": "@codigos/typed-fsm",
   "version": "1.0.0",
   "description": "A strongly typed finite state machine for TypeScript with actor style messaging.",
   "keywords": [
@@ -19,12 +19,16 @@
     "dist"
   ],
   "scripts": {
-    "test": "vitest run",
     "test:watch": "vitest",
-    "build": "tsc",
     "clean": "rm -rf dist",
     "prettier": "prettier --write .",
-    "demo:ts": "npx tsx examples/turnstile/app.ts"
+    "demo:ts": "npx tsx examples/turnstile/app.ts",
+     "build": "tsup",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "yarn build",
+    "bump": "npm run  ./scripts/release.js"
+
   },
   "devDependencies": {
     "tsx": "^4.21.0",
